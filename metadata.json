@@ -1,0 +1,6 @@
+{
+  "name": "CertiGen Pro",
+  "description": "High-fidelity certificate generator with CSV parsing, 8 designer templates, visual layout customizer, ZIP export, and SMTP automated email delivery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
