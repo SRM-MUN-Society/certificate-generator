@@ -591,7 +591,7 @@ export default function App() {
                     : "border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                <Mail className="w-4 h-4" />
+                <Download className="w-4 h-4" />
                 Delivery
               </button>
             </div>
