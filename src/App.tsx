@@ -4,7 +4,6 @@ import {
   Upload,
   Plus,
   Trash2,
-  Mail,
   Download,
   CheckCircle,
   AlertCircle,
@@ -13,7 +12,6 @@ import {
   Image as ImageIcon,
   Users,
   Loader2,
-  Send,
   Move,
   AlignLeft,
   AlignCenter,
@@ -27,11 +25,9 @@ import {
   Recipient,
   CustomTemplate,
   TextElement,
-  EmailSettings,
 } from "./types";
 import {
   POPULAR_FONTS,
-  DEFAULT_EMAIL_SETTINGS,
   createDefaultTextElements,
 } from "./constants";
 import { CertificatePreview } from "./components/CertificatePreview";
@@ -54,21 +50,14 @@ export default function App() {
   
   // Recipients
   const [recipients, setRecipients] = useState<Recipient[]>([
-    { id: "rcpt-1", name: "Alexandra Chen", email: "alexandra.chen@university.edu", course: "Advanced Machine Learning & Neural Networks", date: "October 8, 2026", status: "pending" },
-    { id: "rcpt-2", name: "David K. Vance", email: "david.vance@corporate.org", course: "Executive Leadership & Strategic Growth", date: "October 8, 2026", status: "pending" },
-    { id: "rcpt-3", name: "Emily Sophia Rose", email: "emily.rose@design-institute.com", course: "Interactive UX/UI Masterclass", date: "October 8, 2026", status: "pending" },
+    { id: "rcpt-1", name: "Alexandra Chen", status: "pending" },
+    { id: "rcpt-2", name: "David K. Vance", status: "pending" },
+    { id: "rcpt-3", name: "Emily Sophia Rose", status: "pending" },
   ]);
   const [selectedRecipientId, setSelectedRecipientId] = useState<string>("rcpt-1");
   const [newRecipientName, setNewRecipientName] = useState("");
-  const [newRecipientEmail, setNewRecipientEmail] = useState("");
-  const [newRecipientCourse, setNewRecipientCourse] = useState("");
-  const [newRecipientDate, setNewRecipientDate] = useState(
-    new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-  );
 
-  // Email Config
-  const [emailSettings, setEmailSettings] = useState<EmailSettings>(DEFAULT_EMAIL_SETTINGS);
-  const [deliveryMode, setDeliveryMode] = useState<"download" | "email">("download");
+  // Export format
   const [exportFormat, setExportFormat] = useState<"pdf" | "png">("pdf");
 
   // Status & Progress UI states
@@ -76,7 +65,6 @@ export default function App() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingStatusText, setProcessingStatusText] = useState("");
   const [showProgressModal, setShowProgressModal] = useState(false);
-  const [dispatchResults, setDispatchResults] = useState<{ succeeded: number; failed: number; details: any[] } | null>(null);
   const [exportingRecipient, setExportingRecipient] = useState<Recipient | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -370,17 +358,12 @@ export default function App() {
     const newRcpt: Recipient = {
       id: `rcpt-${Date.now()}`,
       name: newRecipientName.trim(),
-      email: newRecipientEmail.trim(),
-      course: newRecipientCourse.trim() || "Professional Program",
-      date: newRecipientDate || new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
       status: "pending",
     };
 
     setRecipients([...recipients, newRcpt]);
     setSelectedRecipientId(newRcpt.id);
     setNewRecipientName("");
-    setNewRecipientEmail("");
-    setNewRecipientCourse("");
     showToast("Added recipient to your active list!", "success");
   };
 
@@ -477,115 +460,50 @@ export default function App() {
       return;
     }
 
-    if (deliveryMode === "email") {
-      if (!emailSettings.emailUser.trim() || !emailSettings.emailKey.trim()) {
-        showToast("Please provide your email username and App Password/Key.", "error");
-        setActiveTab("delivery");
-        return;
-      }
-    }
-
     setIsProcessing(true);
     setProcessingProgress(0);
-    setDispatchResults(null);
     setExportError(null);
-    setProcessingStatusText("Preparing compiler engine...");
+    setProcessingStatusText("Preparing to generate certificates...");
     setShowProgressModal(true);
 
     try {
       const zip = new JSZip();
-      const emailPayloads: any[] = [];
       const extension = exportFormat === "pdf" ? "pdf" : "png";
 
       for (let i = 0; i < recipients.length; i++) {
         const rcpt = recipients[i];
-        const progressPercentage = Math.round((i / recipients.length) * 50);
+        const progressPercentage = Math.round(((i + 1) / recipients.length) * 90);
         setProcessingProgress(progressPercentage);
-        setProcessingStatusText(`Rendering certificate ${i + 1} of ${recipients.length} (${rcpt.name})...`);
+        setProcessingStatusText(`Generating certificate ${i + 1} of ${recipients.length} (${rcpt.name})...`);
 
-        const { blob, base64 } = await renderCertificateData(rcpt);
+        const { blob } = await renderCertificateData(rcpt);
         const safeFileName = `certificate_${rcpt.name.replace(/[^a-zA-Z0-9]/g, "_")}.${extension}`;
         
         zip.file(safeFileName, blob);
-
-        if (deliveryMode === "email") {
-          emailPayloads.push({
-            name: rcpt.name,
-            email: rcpt.email,
-            course: rcpt.course,
-            date: rcpt.date,
-            fileData: base64,
-            fileName: safeFileName,
-          });
-        }
       }
 
-      if (deliveryMode === "download") {
-        setProcessingStatusText("Packaging ZIP archive...");
-        setProcessingProgress(75);
-        
-        const contentZip = await zip.generateAsync({ type: "blob" });
-        setProcessingProgress(100);
-        
-        const url = URL.createObjectURL(contentZip);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Certificates_Batch_${new Date().toISOString().slice(0,10)}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showToast(`Successfully prepared & downloaded ZIP package!`, "success");
-        setShowProgressModal(false);
-      } else {
-        setProcessingStatusText("Uploading certificates to mail gateway...");
-        setProcessingProgress(65);
-
-        const response = await fetch("/api/send-certificates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            emailUser: emailSettings.emailUser,
-            emailKey: emailSettings.emailKey,
-            subject: emailSettings.subject,
-            messageTemplate: emailSettings.messageTemplate,
-            recipients: emailPayloads,
-          }),
-        });
-
-        setProcessingProgress(90);
-
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `Server authentication failed with code ${response.status}`);
-        }
-
-        const resultData = await response.json();
-        setProcessingProgress(100);
-        setDispatchResults({
-          succeeded: resultData.summary?.succeeded || 0,
-          failed: resultData.summary?.failed || 0,
-          details: resultData.details || [],
-        });
-        
-        const contentZip = await zip.generateAsync({ type: "blob" });
-        const url = URL.createObjectURL(contentZip);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Certificates_Backup_${new Date().toISOString().slice(0,10)}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showToast(`Emailed certificates and downloaded a backup ZIP!`, "success");
-      }
+      setProcessingStatusText("Packaging ZIP archive...");
+      setProcessingProgress(95);
+      
+      const contentZip = await zip.generateAsync({ type: "blob" });
+      setProcessingProgress(100);
+      
+      const url = URL.createObjectURL(contentZip);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Certificates_${new Date().toISOString().slice(0,10)}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      showToast(`Successfully generated ${recipients.length} certificate(s)!`, "success");
+      setShowProgressModal(false);
     } catch (error: any) {
       console.error(error);
-      setExportError(error.message || "An error occurred during certificate compilation.");
-      showToast(error.message || "An error occurred during certificate compilation.", "error");
-      setProcessingStatusText(`Error: ${error.message || "Compilation failed"}`);
+      setExportError(error.message || "An error occurred during certificate generation.");
+      showToast(error.message || "An error occurred during certificate generation.", "error");
+      setProcessingStatusText(`Error: ${error.message || "Generation failed"}`);
     } finally {
       setIsProcessing(false);
       setExportingRecipient(null);
@@ -813,7 +731,7 @@ export default function App() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Text Content
                         <span className="text-xs font-normal text-gray-500 ml-2">
-                          Use {"{name}"}, {"{course}"}, {"{date}"}, {"{email}"}
+                          Use {"{name}"} for recipient name
                         </span>
                       </label>
                       <textarea
@@ -1011,34 +929,7 @@ export default function App() {
                           type="text"
                           value={newRecipientName}
                           onChange={(e) => setNewRecipientName(e.target.value)}
-                          placeholder="Name *"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="email"
-                          value={newRecipientEmail}
-                          onChange={(e) => setNewRecipientEmail(e.target.value)}
-                          placeholder="Email"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={newRecipientCourse}
-                          onChange={(e) => setNewRecipientCourse(e.target.value)}
-                          placeholder="Course/Program"
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={newRecipientDate}
-                          onChange={(e) => setNewRecipientDate(e.target.value)}
-                          placeholder="Date"
+                          placeholder="Recipient Name *"
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         />
                       </div>
@@ -1078,7 +969,6 @@ export default function App() {
                         >
                           <div className="flex-1">
                             <div className="font-semibold text-sm text-gray-900">{rcpt.name}</div>
-                            <div className="text-xs text-gray-500">{rcpt.email}</div>
                           </div>
                           <button
                             onClick={(e) => {
@@ -1135,77 +1025,6 @@ export default function App() {
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Mode</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          onClick={() => setDeliveryMode("download")}
-                          className={`p-3 rounded-lg border-2 transition-colors ${
-                            deliveryMode === "download"
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          <Download className="w-6 h-6 mx-auto mb-1" />
-                          <div className="text-sm font-semibold">Download ZIP</div>
-                        </button>
-                        <button
-                          onClick={() => setDeliveryMode("email")}
-                          className={`p-3 rounded-lg border-2 transition-colors ${
-                            deliveryMode === "email"
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                        >
-                          <Mail className="w-6 h-6 mx-auto mb-1" />
-                          <div className="text-sm font-semibold">Email</div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {deliveryMode === "email" && (
-                      <div className="space-y-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Email Username</label>
-                          <input
-                            type="email"
-                            value={emailSettings.emailUser}
-                            onChange={(e) => setEmailSettings({ ...emailSettings, emailUser: e.target.value })}
-                            placeholder="your-email@gmail.com"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">App Password/Key</label>
-                          <input
-                            type="password"
-                            value={emailSettings.emailKey}
-                            onChange={(e) => setEmailSettings({ ...emailSettings, emailKey: e.target.value })}
-                            placeholder="••••••••••••••••"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Subject</label>
-                          <input
-                            type="text"
-                            value={emailSettings.subject}
-                            onChange={(e) => setEmailSettings({ ...emailSettings, subject: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Message Template</label>
-                          <textarea
-                            value={emailSettings.messageTemplate}
-                            onChange={(e) => setEmailSettings({ ...emailSettings, messageTemplate: e.target.value })}
-                            rows={6}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
-
                     <button
                       onClick={handleBatchExecution}
                       disabled={isProcessing || !customTemplate}
@@ -1218,8 +1037,8 @@ export default function App() {
                         </>
                       ) : (
                         <>
-                          {deliveryMode === "email" ? <Send className="w-6 h-6" /> : <Download className="w-6 h-6" />}
-                          {deliveryMode === "email" ? "Send Certificates" : "Generate & Download"}
+                          <Download className="w-6 h-6" />
+                          Generate & Download ZIP
                         </>
                       )}
                     </button>
@@ -1315,16 +1134,6 @@ export default function App() {
               {exportError && (
                 <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-sm text-red-700">{exportError}</p>
-                </div>
-              )}
-
-              {dispatchResults && (
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg text-left">
-                  <p className="text-sm text-green-700 font-semibold mb-2">Email Results:</p>
-                  <p className="text-sm text-green-600">
-                    ✓ Succeeded: {dispatchResults.succeeded}<br />
-                    ✗ Failed: {dispatchResults.failed}
-                  </p>
                 </div>
               )}
 

@@ -2,7 +2,11 @@ import ExcelJS from "exceljs";
 import { Recipient } from "../types";
 
 /**
- * Parses an Excel (.xlsx or .xls) file from an ArrayBuffer into Recipient objects using ExcelJS.
+ * Parses an Excel (.xlsx or .xls) file from an ArrayBuffer into Recipient objects.
+ * Supports:
+ * 1. Simple name list (one name per row)
+ * 2. Excel with "Name" or "Names" header
+ * 3. Multi-column Excel (only name column is used)
  */
 export async function parseExcel(arrayBuffer: ArrayBuffer): Promise<Recipient[]> {
   const workbook = new ExcelJS.Workbook();
@@ -34,58 +38,44 @@ export async function parseExcel(arrayBuffer: ArrayBuffer): Promise<Recipient[]>
     rows.push(rowValues);
   });
 
-  if (rows.length < 2) return [];
-
-  // Headers row is the first row
-  const headers = (rows[0] as any[]).map((h) => 
-    (h !== undefined && h !== null ? String(h) : "").trim().toLowerCase()
-  );
-
-  // Find header index mappings (aligned with parseCSV)
-  const nameIdx = headers.findIndex((h) => h.includes("name") || h.includes("recipient") || h === "to");
-  const emailIdx = headers.findIndex((h) => h.includes("email") || h.includes("mail") || h === "id");
-  const courseIdx = headers.findIndex((h) => h.includes("course") || h.includes("program") || h.includes("subject") || h === "event" || h.includes("topic"));
-  const dateIdx = headers.findIndex((h) => h.includes("date") || h.includes("issued") || h.includes("time") || h === "on");
-  const customIdx = headers.findIndex((h) => h.includes("custom") || h.includes("id") || h.includes("field") || h.includes("meta") || h.includes("grade") || h.includes("score"));
+  if (rows.length === 0) return [];
 
   const recipients: Recipient[] = [];
+  
+  // Check if first row is a header
+  const firstRow = rows[0] as any[];
+  const firstCellStr = firstRow[0] ? String(firstRow[0]).toLowerCase().trim() : "";
+  const isHeader = firstCellStr === "name" || 
+                  firstCellStr === "names" ||
+                  firstCellStr.includes("name");
 
-  for (let i = 1; i < rows.length; i++) {
-    const values = rows[i] as any[];
-    if (!values || values.length === 0) continue;
+  const startIndex = isHeader ? 1 : 0;
 
-    // Check if the entire row is empty
-    const isRowEmpty = values.every((v) => v === undefined || v === null || String(v).trim() === "");
-    if (isRowEmpty) continue;
+  // Find name column index if header exists
+  let nameColumnIndex = 0;
+  if (isHeader) {
+    const headers = firstRow.map(h => h ? String(h).toLowerCase().trim() : "");
+    const nameIndex = headers.findIndex(h => h.includes("name"));
+    if (nameIndex !== -1) {
+      nameColumnIndex = nameIndex;
+    }
+  }
 
-    const getValue = (idx: number, fallback: string) => {
-      if (idx !== -1 && idx < values.length) {
-        const val = values[idx];
-        if (val !== undefined && val !== null) {
-          if (val instanceof Date) {
-            return val.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-          }
-          return String(val).trim();
-        }
-      }
-      return fallback;
-    };
+  for (let i = startIndex; i < rows.length; i++) {
+    const row = rows[i] as any[];
+    if (!row || row.length === 0) continue;
 
-    const name = getValue(nameIdx, "Recipient " + i);
-    const email = getValue(emailIdx, "");
-    const course = getValue(courseIdx, "Professional Program");
-    const date = getValue(dateIdx, new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }));
-    const customField = customIdx !== -1 ? getValue(customIdx, "") : undefined;
+    const nameValue = row[nameColumnIndex];
+    if (nameValue === undefined || nameValue === null) continue;
 
-    recipients.push({
-      id: `rcpt-${Date.now()}-${i}`,
-      name,
-      email,
-      course,
-      date,
-      customField,
-      status: "pending"
-    });
+    const name = String(nameValue).trim();
+    if (name) {
+      recipients.push({
+        id: `rcpt-${Date.now()}-${i}`,
+        name,
+        status: "pending"
+      });
+    }
   }
 
   return recipients;

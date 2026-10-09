@@ -18,27 +18,6 @@ export const POPULAR_FONTS = [
   { name: "Dancing Script (Flowing Script)", value: "Dancing Script" },
 ];
 
-export const DEFAULT_EMAIL_SETTINGS = {
-  emailUser: "",
-  emailKey: "",
-  subject: "Congratulations {name}! Your Certificate for {course} is ready",
-  messageTemplate: `Dear {name},
-
-Congratulations on completing the {course}!
-
-We are delighted to present you with your official Certificate of Completion. You can find your certified document attached to this email.
-
-Details:
-- Recipient: {name}
-- Program: {course}
-- Date of Issuance: {date}
-
-We wish you the absolute best in your future endeavors. Keep up the amazing work!
-
-Best regards,
-The CertiGen Pro Team`
-};
-
 // Default text elements for a new template
 export const createDefaultTextElements = (): TextElement[] => [
   {
@@ -62,40 +41,10 @@ export const createDefaultTextElements = (): TextElement[] => [
     placeholder: "{name}",
     text: "{name}",
     x: 50,
-    y: 45,
+    y: 50,
     fontSize: 56,
     fontFamily: "Great Vibes",
     color: "#1e293b",
-    bold: false,
-    italic: false,
-    uppercase: false,
-    textAlign: "center",
-  },
-  {
-    id: `elem-${Date.now()}-3`,
-    label: "Course Name",
-    placeholder: "{course}",
-    text: "{course}",
-    x: 50,
-    y: 60,
-    fontSize: 28,
-    fontFamily: "Playfair Display",
-    color: "#0f172a",
-    bold: true,
-    italic: false,
-    uppercase: false,
-    textAlign: "center",
-  },
-  {
-    id: `elem-${Date.now()}-4`,
-    label: "Date",
-    placeholder: "{date}",
-    text: "{date}",
-    x: 50,
-    y: 75,
-    fontSize: 18,
-    fontFamily: "Inter",
-    color: "#64748b",
     bold: false,
     italic: false,
     uppercase: false,

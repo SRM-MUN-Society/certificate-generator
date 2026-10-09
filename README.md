@@ -1,6 +1,6 @@
 # CertiGen Pro
 
-**A professional certificate generation and automation platform.** Upload your own certificate templates (images or PDFs), customize text placement with drag-and-drop, and generate batch certificates with automated email delivery.
+**A professional certificate generation and automation platform.** Upload your own certificate templates (images or PDFs), customize text placement with drag-and-drop, and generate batch certificates with ZIP download export.
 
 ---
 
@@ -9,13 +9,13 @@
 - **📄 Custom Templates** - Upload any certificate template (PNG, JPG, PDF)
 - **🎨 Visual Editor** - Drag-and-drop text placement with live preview
 - **✍️ Full Typography Control** - 15+ fonts, colors, sizes, alignment
-- **🔄 Dynamic Variables** - Use `{name}`, `{course}`, `{date}`, `{email}`
+- **🔄 Dynamic Variables** - Use `{name}` for recipient names
 - **👥 Batch Processing** - Generate certificates for unlimited recipients
 - **📊 CSV/Excel Import** - Bulk import recipient data
-- **📧 Email Delivery** - Automated SMTP email distribution
 - **💾 Save Templates** - Export/import template configurations as JSON
 - **📱 PDF Support** - Automatic PDF to image conversion
 - **🎯 High Quality** - Print-ready PDF and PNG exports
+- **📦 ZIP Export** - Download all certificates in one file
 
 ---
 
@@ -66,8 +66,6 @@ npm run build
 **Default Elements:**
 - Certificate Title
 - Recipient Name (`{name}`)
-- Course Name (`{course}`)
-- Date (`{date}`)
 
 **To Customize:**
 
@@ -89,11 +87,7 @@ npm run build
 
 **Dynamic Variables:**
 ```
-{name}   → Recipient's full name
-{course} → Course or program name
-{date}   → Date of issuance
-{email}  → Recipient's email address
-{custom} → Custom field (if in CSV)
+{name} → Recipient's name
 ```
 
 **Add/Remove Elements:**
@@ -107,68 +101,47 @@ npm run build
 #### Option A: Manual Entry
 
 1. Go to **Recipients** tab
-2. Fill in the form:
-   - Name (required)
-   - Email
-   - Course/Program
-   - Date
+2. Enter recipient name
 3. Click **"Add Recipient"**
 
 #### Option B: CSV/Excel Import
 
-1. Prepare spreadsheet with columns: `name`, `email`, `course`, `date`
+**Simple Format - Just Names!**
 
-**Example CSV:**
 ```csv
-name,email,course,date
-"John Doe","john@example.com","Web Development","January 15, 2027"
-"Jane Smith","jane@example.com","Data Science","January 15, 2027"
+Alexandra Chen
+David K. Vance
+Emily Sophia Rose
 ```
 
-2. Click **"Import CSV/Excel"**
-3. Select your file
-4. Recipients appear in list
+*That's it! One name per line.*
 
-**Download Template CSV:**
-- Click download icon to export current list as template
+**Optional: With Header**
+```csv
+Name
+Alexandra Chen
+David K. Vance
+```
+
+**Import Steps:**
+1. Click **"Import CSV/Excel"**
+2. Select your file (text list or spreadsheet)
+3. Recipients appear instantly
+
+**Download Template:**
+- Click download icon to export current list
 
 ---
 
 ### 4. Generate Certificates
 
-#### Option A: Download ZIP
-
 1. Go to **Delivery** tab
 2. Choose **Export Format:**
    - **PDF** - Best for printing and professional use
    - **PNG** - Image format for web/social media
-3. Select **"Download ZIP"** mode
-4. Click **"Generate & Download"**
-5. Wait for processing (progress shown)
-6. ZIP file downloads automatically
-
-#### Option B: Email Delivery
-
-**Setup (First Time Only):**
-
-1. Get SMTP credentials:
-   - **Gmail:** Enable 2FA → Generate App Password ([instructions](https://support.google.com/accounts/answer/185833))
-   - **Outlook/Others:** Use account password or app-specific password
-
-2. Go to **Delivery** tab
-3. Select **"Email"** mode
-4. Enter credentials:
-   - **Email Username:** your-email@gmail.com
-   - **App Password:** Your generated app password
-
-**Customize Email:**
-- **Subject:** `Congratulations {name}! Your {course} Certificate`
-- **Message:** Use variables in email body
-
-**Send:**
-1. Click **"Send Certificates"**
-2. Certificates emailed to each recipient
-3. Backup ZIP also downloads
+3. Click **"Generate & Download ZIP"**
+4. Wait for processing (progress modal shows status)
+5. ZIP file downloads automatically with all certificates
 
 ---
 
@@ -282,35 +255,51 @@ Body: Open Sans (18px)
 
 ---
 
-## � CSV Format Reference
+## 📊 CSV Format Reference
 
-### Required Columns
+### Simple Format - Just Names!
 
-```csv
-name,email,course,date
+The simplest possible format. Just list names, one per line:
+
+```
+Alexandra Chen
+David K. Vance
+Emily Sophia Rose
+Michael Rodriguez
+Sarah Johnson
 ```
 
-### Optional Columns
+**That's it!** No headers, no commas, no special formatting needed.
 
-```csv
-name,email,course,date,customField
+---
+
+### Optional: With Header
+
+If you prefer, add a "Name" header:
+
+```
+Name
+Alexandra Chen
+David K. Vance
+Emily Sophia Rose
 ```
 
-### Example with All Fields
+Both formats work identically.
 
-```csv
-name,email,course,date,customField
-"Alexandra Chen","alex@university.edu","Machine Learning","October 15, 2026","Honors"
-"David Vance","david@company.org","Leadership","October 15, 2026","Executive Track"
-"Emily Rose","emily@institute.com","UX Design","October 15, 2026","Distinction"
-```
+---
 
-### Tips
+### Works With:
+- ✅ **Plain text files** (.txt, .csv)
+- ✅ **Excel files** (.xlsx, .xls)
+- ✅ **Google Sheets** (export as CSV)
+- ✅ **Copy/paste** from anywhere
 
-- Use quotes for names with commas
-- Date format: Any readable format (e.g., "January 1, 2027" or "2027-01-01")
-- Email is optional if only downloading certificates
-- Custom field can be used with `{custom}` variable
+### Tips:
+- One name per line
+- No special characters needed
+- Works with any text editor
+- Copy names from emails, documents, websites
+- Perfect for quick certificate generation
 
 ---
 
@@ -319,10 +308,9 @@ name,email,course,date,customField
 ### Built With
 
 - **Frontend:** React 18, TypeScript, Tailwind CSS
-- **Backend:** Node.js, Express.js
 - **PDF Processing:** PDF.js (Mozilla)
 - **Image Export:** modern-screenshot, jsPDF
-- **Email:** Nodemailer (SMTP)
+- **File Packaging:** JSZip
 
 ### System Requirements
 
@@ -363,23 +351,15 @@ name,email,course,date,customField
 
 - ✅ **Client-side processing** - All template editing in browser
 - ✅ **No server uploads** - Templates stay on your device
-- ✅ **SMTP only** - Email credentials used only for sending
-- ✅ **No tracking** - No analytics or data collection
 - ✅ **Local storage** - Templates stored in browser memory only
-
-### Email Security
-
-- Use **App Passwords**, never account passwords
-- Credentials stored in memory only (not saved)
-- TLS/SSL encryption for email transmission
-- No credential storage between sessions
+- ✅ **No tracking** - No analytics or data collection
+- ✅ **Privacy-first** - Your data never leaves your device
 
 ### Recommendations
 
-- Test email with 1-2 recipients first
+- Test generation with 1-2 recipients first
 - Keep recipient data secure (CSV files)
-- Use strong app passwords
-- Review recipient list before bulk send
+- Review recipient list before bulk generation
 
 ---
 
@@ -460,17 +440,6 @@ name,email,course,date,customField
 - Try generating single certificate first
 - Close other browser tabs (free up memory)
 
-### Email Delivery Issues
-
-**Issue:** Emails not sending
-
-**Solutions:**
-- **Gmail:** Ensure 2FA enabled and using App Password (not account password)
-- **SMTP:** Verify credentials are correct
-- **Limits:** Gmail limit is ~500 emails/day
-- **Test:** Send to yourself first to verify setup
-- **Spam:** Ask recipients to check spam folders
-
 ### Font Not Rendering
 
 **Issue:** Font looks different than expected
@@ -507,20 +476,9 @@ name,email,course,date,customField
 ### Recipient Data
 
 - Clean data before import (remove duplicates)
-- Standardize date formats
-- Verify email addresses are valid
-- Include all required fields
+- Verify names are correctly formatted
 - Keep original CSV as backup
 - Test import with small sample first
-
-### Email Delivery
-
-- Send test batch (5-10) before full batch
-- Personalize subject line with variables
-- Keep message professional and concise
-- Include certificate as attachment (automatic)
-- Stay within provider email limits
-- Send during business hours for better delivery
 
 ### Performance
 
@@ -528,7 +486,6 @@ name,email,course,date,customField
 - Process large batches in chunks (100-200 at a time)
 - Use PDF format for smaller file sizes
 - Generate overnight for very large batches
-- Save progress by exporting CSV at intervals
 
 ---
 
@@ -561,21 +518,11 @@ name,email,course,date,customField
 **3. Generation (10 minutes for 100)**
 ```
 → Select export format (PDF recommended)
-→ Choose delivery mode (Download or Email)
-→ Configure email if needed
-→ Click Generate
+→ Click Generate & Download ZIP
 → Wait for batch processing
 → Download ZIP file
 → Verify random samples
-```
-
-**4. Distribution (if email)**
-```
-→ Certificates automatically sent
-→ Backup ZIP downloaded
-→ Monitor email logs
-→ Follow up with bounced emails
-→ Respond to recipient questions
+→ Distribute certificates as needed
 ```
 
 **Total Time: ~30 minutes for complete process**

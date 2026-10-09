@@ -58,19 +58,11 @@ export const CertificatePreview: React.FC<CertificatePreviewProps> = ({
   const activeRecipient: Recipient = recipient || {
     id: "preview-id",
     name: "Alexandra Chen",
-    email: "alexandra.chen@example.com",
-    course: "Advanced Data Science & Machine Learning",
-    date: "October 8, 2026",
   };
 
   // Interpolate placeholders
   const interpolate = (text: string) => {
-    return text
-      .replace(/{name}/g, activeRecipient.name)
-      .replace(/{course}/g, activeRecipient.course)
-      .replace(/{date}/g, activeRecipient.date)
-      .replace(/{email}/g, activeRecipient.email)
-      .replace(/{custom}/g, activeRecipient.customField || "");
+    return text.replace(/{name}/g, activeRecipient.name);
   };
 
   const renderTextElement = (elem: TextElement) => {
@@ -81,7 +73,7 @@ export const CertificatePreview: React.FC<CertificatePreviewProps> = ({
       left: `${elem.x}%`,
       top: `${elem.y}%`,
       transform: "translate(-50%, -50%)",
-      fontSize: isExporting ? `${elem.fontSize * 1.5}px` : `${elem.fontSize}px`,
+      fontSize: `${elem.fontSize}px`,
       fontFamily: elem.fontFamily,
       color: elem.color,
       fontWeight: elem.bold ? "700" : "400",

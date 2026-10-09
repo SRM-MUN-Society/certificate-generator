@@ -1,10 +1,6 @@
 export interface Recipient {
   id: string;
   name: string;
-  email: string;
-  course: string;
-  date: string;
-  customField?: string;
   status?: "pending" | "generating" | "success" | "failed";
   error?: string;
 }
@@ -34,11 +30,4 @@ export interface CustomTemplate {
   height: number; // Template height in pixels
   textElements: TextElement[];
   createdAt: string;
-}
-
-export interface EmailSettings {
-  emailUser: string;
-  emailKey: string;
-  subject: string;
-  messageTemplate: string;
 }
